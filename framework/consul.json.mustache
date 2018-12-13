@@ -1,0 +1,49 @@
+{
+  "reconnect_timeout": "8h",
+  "reconnect_timeout_wan": "8h",
+  "leave_on_terminate": true,
+  "rejoin_after_leave": true,
+  "advertise_addr": "{{MESOS_CONTAINER_IP}}",
+  "client_addr": "127.0.0.1 {{MESOS_CONTAINER_IP}}",
+  "datacenter": "dcos",
+  {{#SECURITY_TRANSPORT_ENCRYPTION_ENABLED}}
+  "ca_file": "{{MESOS_SANDBOX}}/node.ca",
+  "cert_file": "{{MESOS_SANDBOX}}/node.crt",
+  "key_file": "{{MESOS_SANDBOX}}/node.key",
+  {{/SECURITY_TRANSPORT_ENCRYPTION_ENABLED}}
+  "encrypt": "{{SECURITY_GOSSIP_ENCRYPTION_KEY}}",
+  "ports": {
+    {{#PORT_DNS_ENABLED}}
+    "dns": {{PORT_DNS}},
+    {{/PORT_DNS_ENABLED}}
+    {{^PORT_DNS_ENABLED}}
+    "dns": -1,
+    {{/PORT_DNS_ENABLED}}
+    {{#PORT_HTTP_ENABLED}}
+    "http": {{PORT_HTTP}},
+    {{/PORT_HTTP_ENABLED}}
+    {{^PORT_HTTP_ENABLED}}
+    "http": -1,
+    {{/PORT_HTTP_ENABLED}}
+    {{#SECURITY_TRANSPORT_ENCRYPTION_ENABLED}}
+    "https": {{PORT_HTTPS}},
+    {{/SECURITY_TRANSPORT_ENCRYPTION_ENABLED}}
+    {{^SECURITY_TRANSPORT_ENCRYPTION_ENABLED}}
+    "https": -1,
+    {{/SECURITY_TRANSPORT_ENCRYPTION_ENABLED}}
+    {{#PORT_GRPC_ENABLED}}
+    "grpc": {{PORT_GRPC}},
+    {{/PORT_GRPC_ENABLED}}
+    {{^PORT_GRPC_ENABLED}}
+    "grpc": -1,
+    {{/PORT_GRPC_ENABLED}}
+    {{#PORT_SERF_WAN_ENABLED}}
+    "serf_wan": {{PORT_SERF_WAN}},
+    {{/PORT_SERF_WAN_ENABLED}}
+    {{^PORT_SERF_WAN_ENABLED}}
+    "serf_wan": -1,
+    {{/PORT_SERF_WAN_ENABLED}}
+    "serf_lan": {{PORT_SERF_LAN}},
+    "server": {{PORT_SERVER}}
+  }
+}

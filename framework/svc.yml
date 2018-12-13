@@ -1,0 +1,122 @@
+name: {{FRAMEWORK_NAME}}
+scheduler:
+  principal: {{FRAMEWORK_PRINCIPAL}}
+  user: {{FRAMEWORK_USER}}
+pods:
+  consul:
+    count: {{NODE_COUNT}}
+    placement: '{{{NODE_PLACEMENT}}}'
+    {{#ENABLE_VIRTUAL_NETWORK}}
+    networks:
+      {{VIRTUAL_NETWORK_NAME}}:
+        labels: {{VIRTUAL_NETWORK_PLUGIN_LABELS}}
+    {{/ENABLE_VIRTUAL_NETWORK}}
+    uris:
+      - {{CONSUL_URI}}
+      - {{BOOTSTRAP_URI}}
+    tasks:
+      node:
+        goal: RUNNING
+        ports:
+          rpc:
+            port: {{TASKCFG_ALL_PORT_SERVER}}
+            env-key: PORT_RPC
+          serf-lan:
+            port: {{TASKCFG_ALL_PORT_SERF_LAN}}
+            env-key: PORT_SERF_LAN
+          {{#TASKCFG_ALL_PORT_SERF_WAN_ENABLED}}
+          serf-wan:
+            port: {{TASKCFG_ALL_PORT_SERF_WAN}}
+            env-key: PORT_SERF_WAN
+          {{/TASKCFG_ALL_PORT_SERF_WAN_ENABLED}}
+          {{#TASKCFG_ALL_PORT_HTTP_ENABLED}}
+          api:
+            port: {{TASKCFG_ALL_PORT_HTTP}}
+            env-key: PORT_HTTP
+            advertise: true
+            vip:
+              port: {{TASKCFG_ALL_PORT_HTTP}}
+          {{/TASKCFG_ALL_PORT_HTTP_ENABLED}}
+          {{#TASKCFG_ALL_SECURITY_TRANSPORT_ENCRYPTION_ENABLED}}
+          api-tls:
+            port: {{TASKCFG_ALL_PORT_HTTPS}}
+            env-key: PORT_HTTPS
+            advertise: true
+            vip:
+              port: {{TASKCFG_ALL_PORT_HTTPS}}
+          {{/TASKCFG_ALL_SECURITY_TRANSPORT_ENCRYPTION_ENABLED}}
+          {{#TASKCFG_ALL_PORT_DNS_ENABLED}}
+          dns:
+            port: {{TASKCFG_ALL_PORT_DNS}}
+            env-key: PORT_DNS
+            advertise: true
+            vip:
+              port: {{TASKCFG_ALL_PORT_DNS}}
+          {{/TASKCFG_ALL_PORT_DNS_ENABLED}}
+          {{#TASKCFG_ALL_PORT_GRPC_ENABLED}}
+          grpc:
+            port: {{TASKCFG_ALL_PORT_GRPC}}
+            env-key: PORT_GRPC
+            advertise: true
+            vip:
+              port: {{TASKCFG_ALL_PORT_GRPC}}
+          {{/TASKCFG_ALL_PORT_GRPC_ENABLED}}
+        cmd: |
+          chmod +x consul
+          ./bootstrap
+          if [ -f $MESOS_SANDBOX/consul-data/node-id ]; then
+            echo "Delaying start to give rest of the cluster time to clear old node state"
+            sleep 10  # Wait for old node to loose registration
+          fi
+          ARGS="agent -server -config-file $MESOS_SANDBOX/consul.json -bootstrap-expect={{NODE_COUNT}} -node $TASK_NAME -data-dir=$MESOS_SANDBOX/consul-data -ui"
+          if [ $POD_INSTANCE_INDEX == 0 ]; then
+            ARGS="$ARGS -retry-join consul-1-node.$FRAMEWORK_HOST"
+          else
+            ARGS="$ARGS -retry-join consul-0-node.$FRAMEWORK_HOST"
+          fi
+          exec $MESOS_SANDBOX/consul $ARGS
+        configs:
+          consul:
+            template: consul.json.mustache
+            dest: consul.json
+        cpus: {{NODE_CPUS}}
+        memory: {{NODE_MEM}}
+        {{#TASKCFG_ALL_PORT_HTTP_ENABLED}}
+        readiness-check:
+          cmd: |
+           curl http://$TASK_NAME.$FRAMEWORK_HOST:$PORT_HTTP/v1/status/leader 2>/dev/null | grep -E '".+"'
+          interval: 10
+          delay: 10
+          timeout: 5
+        health-check:
+          cmd: |
+           curl http://$TASK_NAME.$FRAMEWORK_HOST:$PORT_HTTP/v1/status/leader 2>/dev/null | grep -E '".+"'
+          interval: 10
+          grace-period: 20
+          delay: 20
+          timeout: 5
+          max-consecutive-failures: 10
+        {{/TASKCFG_ALL_PORT_HTTP_ENABLED}}
+        volume:
+          path: "consul-data"
+          type: {{NODE_DISK_TYPE}}
+          size: {{NODE_DISK}}
+        {{#TASKCFG_ALL_SECURITY_TRANSPORT_ENCRYPTION_ENABLED}}
+        transport-encryption:
+          - name: node
+            type: TLS
+        {{/TASKCFG_ALL_SECURITY_TRANSPORT_ENCRYPTION_ENABLED}}
+
+plans:
+  deploy:
+    strategy: serial
+    phases:
+      agents:
+        strategy: {{DEPLOY_STRATEGY}}
+        pod: consul
+  update:
+    strategy: serial
+    phases:
+      agents:
+        strategy: {{UPDATE_STRATEGY}}
+        pod: consul
