@@ -23,7 +23,7 @@ By default the package will install 3 nodes. Check the DC/OS UI to see if all of
 ### Custom installation
 You can customize your installation using an options file.
 
-If you want to enable TLS support you need to provide a serviceaccount:
+If you want to enable TLS support you need to provide a serviceaccount (only works on DC/OS EE):
 ```bash
 dcos security org service-accounts keypair private-key.pem public-key.pem
 dcos security org service-accounts create -p public-key.pem -d "Consul service account" consul-principal
@@ -36,7 +36,6 @@ Then create a `options.json` file with the following contents:
 ```json
 {
 	"service": {
-		"virtual_network_enabled": true,
 		"service_account_secret": "consul/principal",
 		"service_account": "consul-principal"
 	},
@@ -58,7 +57,7 @@ After the framework has been started you can reach the HTTPS API via `http://api
 
 
 ### Change configuration
-To change the configuration of consul update your options file and then run `dcos package update start --options=options.json`. Be aware that during the update all the consul nodes will be restarted and their will be a short downtime when the current leader is restarted.
+To change the configuration of consul update your options file and then run `dcos package update start --options=options.json`. Be aware that during the update all the consul nodes will be restarted one by one and there will be a short downtime when the current leader is restarted.
 
 You can increase the number of nodes (check the [consul deployment table](https://www.consul.io/docs/internals/consensus.html#deployment-table) on recommended number of nodes), but not decrease it to avoid data loss.
 
