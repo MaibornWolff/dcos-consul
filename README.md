@@ -5,7 +5,7 @@
 (!) This package is currently in beta. Use in production environments at your own risk.
 
 ## Installation / Usage
-We are working on adding this package to the [Mesosphere Universe](https://universe.dcos.io). In the meantime you can install the package by adding our stub-universe for the version you want. You can find the links on the releases page.
+This package is available in the [DC/OS Universe](https://universe.dcos.io).
 
 ### Requirements
 * DC/OS cluster running at least 1.11
@@ -15,7 +15,6 @@ We are working on adding this package to the [Mesosphere Universe](https://unive
 ### Quickstart
 
 ```bash
-dcos package repo add consul <url-from-releases-page>
 dcos package install consul
 ```
 By default the package will install 3 nodes. Check the DC/OS UI to see if all of the nodes have been started. Once the nodes have been started you can reach the HTTP API from inside the cluster via `http://api.consul.l4lb.thisdcos.directory:8500`.
