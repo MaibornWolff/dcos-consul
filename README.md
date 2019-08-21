@@ -82,6 +82,20 @@ After this the new node will rejoin the cluster.
 You should only replace one node at a time and wait between nodes to give the cluster time to stabilize.
 Depending on your configured number of nodes consul will survive the loss of one or more nodes (for three nodes one node can be lost) and will remain operational.
 
+#### Multiple node failures
+
+In case you lose a majority of nodes or the cluster managed to get into a state where the nodes are not able to properly resync and elect a leader, there is a disaster recovery procedure than can help:
+
+* Put all nodes not lost in pause mode `dcos consul debug pod pause <pod-name>`.
+* Select one of the not lost nodes as your new initial leader (if possible use `consul-0` as the other nodes use it as starting point for finding the cluster).
+* Enter the node (`dcos consul task exec -it consul-0-node bash`).
+* Determine node id using `cat consul-data/node-id`.
+* Create a file `consul-data/raft/peers.json` with the following content: `[{"non_voter": false, "id": "<node-id>", "address": "consul-0-node.consul.autoip.dcos.thisdcos.directory:8500"}]`.
+* Exit the node and resume it `dcos consul debug pod resume consul-0`.
+* Look at the logs and verify the node starts up and elects itsself as leader.
+* One by one resume or replace all the other nodes and make sure they join the cluster.
+
+Also see the consul [outage recovery documentation](https://learn.hashicorp.com/consul/day-2-operations/outage) for more details.
 
 ## Features
 * Deploys a distributed consul cluster
