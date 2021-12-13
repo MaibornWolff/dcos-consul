@@ -1,3 +1,6 @@
+# END OF LIFE
+This project is not being maintained anymore.
+
 # Consul for DC/OS
 
 [Consul](https://www.consul.io) is an open-source tool for service discovery and configuration. This project aims to deploy consul in a distributed and high-availability manner on [DC/OS](https://dcos.io) clusters and provides a package for easy installation and management.
